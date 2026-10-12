@@ -1,0 +1,226 @@
+#include <stdio.h>
+ 
+#define MAX 20
+ 
+int n;
+float value[MAX], weight[MAX], ratio[MAX], taken[MAX];
+int id[MAX];
+float capacity, totalWeight, maxValue;
+ 
+void enterDetails() {
+    int i;
+ 
+    printf("\nEnter number of packages: ");
+    scanf("%d", &n);
+ 
+    if (n < 1 || n > MAX) {
+        printf("Invalid number of packages! (1 to %d)\n", MAX);
+        n = 0;
+        return;
+    }
+ 
+    for (i = 0; i < n; i++) {
+        id[i] = i + 1;
+        taken[i] = 0;
+ 
+        printf("Package %d - Enter Value: ", i + 1);
+        scanf("%f", &value[i]);
+ 
+        printf("Package %d - Enter Weight: ", i + 1);
+        scanf("%f", &weight[i]);
+ 
+        if (value[i] < 0 || weight[i] <= 0) {
+            printf("Invalid input! Enter again.\n");
+            i--;
+        }
+    }
+ 
+    do {
+        printf("\nEnter maximum carrying capacity of the vehicle: ");
+        scanf("%f", &capacity);
+        if (capacity <= 0)
+            printf("Capacity must be greater than 0!\n");
+    } while (capacity <= 0);
+ 
+    printf("\nPackage details entered successfully!\n");
+}
+ 
+void displayDetails(int showRatio) {
+    int i;
+ 
+    printf("\n%-10s %-10s %-10s", "Package", "Value", "Weight");
+    if (showRatio)
+        printf(" %-12s", "Value/Weight");
+    printf("\n------------------------------------------\n");
+ 
+    for (i = 0; i < n; i++) {
+        printf("%-10d %-10.2f %-10.2f", id[i], value[i], weight[i]);
+        if (showRatio)
+            printf(" %-12.2f", ratio[i]);
+        printf("\n");
+    }
+    printf("\nVehicle Capacity = %.2f\n", capacity);
+}
+ 
+void calculateRatio() {
+    int i;
+    for (i = 0; i < n; i++)
+        ratio[i] = value[i] / weight[i];
+}
+ 
+void sortByRatio() {
+    int i, j, tid;
+    float t;
+ 
+    for (i = 0; i < n - 1; i++) {
+        for (j = 0; j < n - i - 1; j++) {
+            if (ratio[j] < ratio[j + 1]) {
+                t = ratio[j];  ratio[j]  = ratio[j + 1];  ratio[j + 1]  = t;
+                t = value[j];  value[j]  = value[j + 1];  value[j + 1]  = t;
+                t = weight[j]; weight[j] = weight[j + 1]; weight[j + 1] = t;
+                tid = id[j];   id[j]     = id[j + 1];     id[j + 1]     = tid;
+            }
+        }
+    }
+}
+ 
+void fractionalKnapsack() {
+    int i;
+    float remaining = capacity;
+ 
+    totalWeight = 0;
+    maxValue = 0;
+ 
+    for (i = 0; i < n; i++)
+        taken[i] = 0;
+ 
+    for (i = 0; i < n; i++) {
+        if (remaining <= 0)
+            break;
+ 
+        if (weight[i] <= remaining) {
+            taken[i] = 1.0;
+            remaining -= weight[i];
+            totalWeight += weight[i];
+            maxValue += value[i];
+        } else {
+            taken[i] = remaining / weight[i];
+            maxValue += value[i] * taken[i];
+            totalWeight += remaining;
+            remaining = 0;
+        }
+    }
+}
+ 
+void displaySelected() {
+    int i;
+ 
+    printf("\n%-10s %-10s %-10s %-12s %-10s\n",
+           "Package", "Value", "Weight", "Fraction", "Weight Used");
+    printf("-----------------------------------------------------------\n");
+ 
+    for (i = 0; i < n; i++) {
+        if (taken[i] > 0) {
+            printf("%-10d %-10.2f %-10.2f %-12.2f %-10.2f",
+                   id[i], value[i], weight[i], taken[i], taken[i] * weight[i]);
+            if (taken[i] < 1.0)
+                printf("  (fraction)");
+            printf("\n");
+        }
+    }
+ 
+    printf("\nTotal Weight Used : %.2f / %.2f\n", totalWeight, capacity);
+    printf("Maximum Value     : %.2f\n", maxValue);
+}
+ 
+int main() {
+    int choice;
+    int entered = 0, ratioDone = 0, sorted = 0, solved = 0;
+ 
+    do {
+        printf("\n====================================\n");
+        printf("   SMART DELIVERY PLANNING\n");
+        printf("   FRACTIONAL KNAPSACK (GREEDY)\n");
+        printf("====================================\n");
+        printf("1. Enter Package Details\n");
+        printf("2. Display Package Details\n");
+        printf("3. Calculate Value/Weight Ratio\n");
+        printf("4. Sort Packages by Ratio\n");
+        printf("5. Find Maximum Value\n");
+        printf("6. Display Selected Packages\n");
+        printf("7. Exit\n");
+        printf("\nEnter choice: ");
+        scanf("%d", &choice);
+ 
+        switch (choice) {
+            case 1:
+                enterDetails();
+                entered = (n > 0);
+                ratioDone = sorted = solved = 0;
+                break;
+ 
+            case 2:
+                if (!entered)
+                    printf("\nPlease enter package details first.\n");
+                else
+                    displayDetails(ratioDone);
+                break;
+ 
+            case 3:
+                if (!entered)
+                    printf("\nPlease enter package details first.\n");
+                else {
+                    calculateRatio();
+                    ratioDone = 1;
+                    sorted = solved = 0;
+                    printf("\nValue/Weight ratios calculated.\n");
+                    displayDetails(1);
+                }
+                break;
+ 
+            case 4:
+                if (!entered)
+                    printf("\nPlease enter package details first.\n");
+                else if (!ratioDone)
+                    printf("\nPlease calculate Value/Weight ratio first.\n");
+                else {
+                    sortByRatio();
+                    sorted = 1;
+                    solved = 0;
+                    printf("\nPackages sorted in decreasing order of ratio.\n");
+                    displayDetails(1);
+                }
+                break;
+ 
+            case 5:
+                if (!entered)
+                    printf("\nPlease enter package details first.\n");
+                else if (!sorted)
+                    printf("\nPlease sort the packages by ratio first.\n");
+                else {
+                    fractionalKnapsack();
+                    solved = 1;
+                    printf("\nMaximum value = %.2f\n", maxValue);
+                }
+                break;
+ 
+            case 6:
+                if (!entered)
+                    printf("\nPlease enter package details first.\n");
+                else if (!solved)
+                    printf("\nPlease find the maximum value first.\n");
+                else
+                    displaySelected();
+                break;
+ 
+            case 7:
+                printf("\nThank you for using Smart Delivery Planning!\n");
+                break;
+ 
+            default:
+                printf("\nInvalid choice!\n");
+        }
+    } while (choice != 7);
+ 
+    return 0;
+}
